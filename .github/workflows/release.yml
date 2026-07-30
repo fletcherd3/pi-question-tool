@@ -1,0 +1,80 @@
+name: Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+# Serialize publish runs: a main push (canary) and a v* tag (release) pushed
+# together would otherwise race on npm's packument (E409 Conflict). A queued
+# publish is never dropped; only an older pending duplicate is replaced.
+concurrency:
+  group: release-publish
+  cancel-in-progress: false
+
+jobs:
+  release:
+    # Stable channel (latest): manual dispatch or a cut v* tag.
+    if: github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Publish to npm
+        run: npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  canary:
+    # Canary channel: every push to main publishes an ephemeral
+    # <base>-canary.<sha>.<attempt> prerelease under the `canary` dist-tag.
+    # It never touches `latest`, never creates a git tag, and pushes nothing
+    # back to main. Install with: pi install npm:pi-question-tool@canary
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+          cache: npm
+
+      - name: Install
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Publish canary (canary dist-tag, never latest)
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -e
+          BASE=$(node -p "require('./package.json').version")
+          BASE=${BASE%%-*}                 # strip any existing prerelease segment
+          SHA=$(git rev-parse --short HEAD)
+          # --no-git-tag-version: rewrite package.json only — no tag, no commit.
+          npm version "$BASE-canary.$SHA.$RUN_ATTEMPT" --no-git-tag-version
+          # --tag canary: set ONLY the canary dist-tag; latest stays put.
+          npm publish --tag canary --access public

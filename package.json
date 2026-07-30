@@ -1,0 +1,53 @@
+{
+  "name": "pi-question-tool",
+  "version": "0.1.0",
+  "description": "Interactive question and questionnaire tools for the pi coding agent — ask the user single or multiple questions with option lists and free-text input via custom TUI.",
+  "keywords": [
+    "pi-package",
+    "pi-coding-agent",
+    "pi-agent",
+    "question",
+    "questionnaire",
+    "interactive",
+    "tui",
+    "tool"
+  ],
+  "license": "MIT",
+  "author": "SakikoTogawa233",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/SakikoTogawa233/pi-question-tool.git"
+  },
+  "homepage": "https://github.com/SakikoTogawa233/pi-question-tool#readme",
+  "bugs": {
+    "url": "https://github.com/SakikoTogawa233/pi-question-tool/issues"
+  },
+  "files": [
+    "extensions",
+    "README.md",
+    "LICENSE"
+  ],
+  "pi": {
+    "extensions": [
+      "./extensions"
+    ]
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@earendil-works/pi-coding-agent": "^0.83.0",
+    "@earendil-works/pi-tui": "^0.83.0",
+    "@types/node": "^26.1.1",
+    "typebox": "^1.3.8",
+    "typescript": "^5.9.3"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": "*",
+    "@earendil-works/pi-tui": "*",
+    "typebox": "*"
+  }
+}
