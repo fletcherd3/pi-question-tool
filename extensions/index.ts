@@ -183,8 +183,13 @@ export default function (pi: ExtensionAPI) {
 
 			const allOptions: DisplayOption[] = [...params.options, { label: "Type something.", isOther: true }];
 
-			const result = await ctx.ui.custom<{ answer: string; wasCustom: boolean; index?: number } | null>(
-				(tui, theme, _kb, done) => {
+			// Hide the working spinner while the question UI is open: a tall custom UI
+			// pushes the spinner above the viewport, and its 80ms ticks trigger a full
+			// screen redraw each time (pi-tui #4785) — visible as violent flicker.
+			ctx.ui.setWorkingVisible(false);
+			const result = await ctx.ui
+				.custom<{ answer: string; wasCustom: boolean; index?: number } | null>(
+					(tui, theme, _kb, done) => {
 					let optionIndex = 0;
 					let editMode = false;
 					let cachedLines: string[] | undefined;
@@ -312,7 +317,8 @@ export default function (pi: ExtensionAPI) {
 						handleInput,
 					};
 				},
-			);
+				)
+				.finally(() => ctx.ui.setWorkingVisible(true));
 
 			// Build simple options list for details
 			const simpleOptions = params.options.map((o) => o.label);
@@ -408,7 +414,10 @@ export default function (pi: ExtensionAPI) {
 			const isMulti = questions.length > 1;
 			const totalTabs = questions.length + 1; // questions + Submit
 
-			const result = await ctx.ui.custom<QuestionnaireResult>((tui, theme, _kb, done) => {
+			// See the question tool for why the working spinner is hidden while open.
+			ctx.ui.setWorkingVisible(false);
+			const result = await ctx.ui
+				.custom<QuestionnaireResult>((tui, theme, _kb, done) => {
 				// State
 				let currentTab = 0;
 				let optionIndex = 0;
@@ -676,7 +685,8 @@ export default function (pi: ExtensionAPI) {
 					},
 					handleInput,
 				};
-			});
+				})
+				.finally(() => ctx.ui.setWorkingVisible(true));
 
 			if (result.cancelled) {
 				return {
