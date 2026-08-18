@@ -45,7 +45,9 @@ jobs:
         run: npm install -g npm@^11.5.1
 
       - name: Publish to npm
-        run: npm publish --access public
+        run: |
+          npm --version
+          npm publish --access public --loglevel verbose
 
   canary:
     # Canary channel: every push to main publishes an ephemeral
@@ -85,4 +87,5 @@ jobs:
           # --no-git-tag-version: rewrite package.json only — no tag, no commit.
           npm version "$BASE-canary.$SHA.$RUN_ATTEMPT" --no-git-tag-version
           # --tag canary: set ONLY the canary dist-tag; latest stays put.
-          npm publish --tag canary --access public
+          npm --version
+          npm publish --tag canary --access public --loglevel verbose
