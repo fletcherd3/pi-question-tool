@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  id-token: write # required for npm trusted publishing (OIDC)
 
 # Serialize publish runs: a main push (canary) and a v* tag (release) pushed
 # together would otherwise race on npm's packument (E409 Conflict). A queued
@@ -41,10 +42,11 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@^11.5.1
+
       - name: Publish to npm
         run: npm publish --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
 
   canary:
     # Canary channel: every push to main publishes an ephemeral
@@ -71,9 +73,11 @@ jobs:
       - name: Test
         run: npm test
 
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@^11.5.1
+
       - name: Publish canary (canary dist-tag, never latest)
         env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           RUN_ATTEMPT: ${{ github.run_attempt }}
         run: |
           set -e
